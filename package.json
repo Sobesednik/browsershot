@@ -1,0 +1,20 @@
+{
+  "name": "browsershot",
+  "version": "1.0.0",
+  "description": " A node.js tool to capture browser screen on macOS",
+  "main": "main.js",
+  "scripts": {
+    "test": "zoroaster test"
+  },
+  "keywords": [
+    "browsershot"
+  ],
+  "author": "Anton <anton@sobes.io>",
+  "license": "ISC",
+  "dependencies": {
+    "uuid": "^3.0.1"
+  },
+  "devDependencies": {
+    "zoroaster": "^0.2.0"
+  }
+}
