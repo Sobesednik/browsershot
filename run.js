@@ -38,7 +38,7 @@ const bindedGetWindows = main.getWindows.bind(null, winName, title)
 
 const myIterable = {}
 
-const N = 1
+const N = 0
 myIterable[Symbol.iterator] = function* () {
     yield bindedGetWindows()
     for (let i=0; i<N; i++) {
@@ -53,15 +53,15 @@ myIterable[Symbol.iterator] = function* () {
 //    yield 2
 //    yield 3
 //}
- console.time('main-5')
+ // console.time('main-5')
 
  for (let main of myIterable) {
      main
-        .then(console.log)
+         .then(console.log)
         .catch(console.error)
  }
 
- console.timeEnd('main-5')
+ // console.timeEnd('main-5')
 
 return
 

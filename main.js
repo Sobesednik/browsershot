@@ -17,17 +17,24 @@ function spawnPython(resolve) {
     const python = cp.spawn('python', [pyPath])
     const data = []
     
-    python.stdout.pipe(logWriteStream)
-    python.stderr.pipe(logWriteStream2)
+    // python.stdout.pipe(logWriteStream)
+    // python.stderr.pipe(logWriteStream2)
     
     const writable = new Writable()
     writable._write = (chunk, encoding, callback) => {
-        console.log(chunk) // expect object
-        data.push(chunk)
+        // process.stderr.write(chunk)
+        debug('>>> ========')
+        debug(String(chunk).trim())
+        debug('pushing chunk >>>')
+        data.push(String(chunk).trim())
         callback(null)
     }
+    // python.stderr.pipe(process.stderr)
+
     python.stdout
         .pipe(writable)
+    
+    // python.stdout.pipe(process.stderr)
         //.pipe(es.mapSync(function(data) {
   //      }))
     //apython.stdout.on('data', (chunk) => {
