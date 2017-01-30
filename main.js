@@ -2,6 +2,7 @@ const path = require('path')
 const cp = require('child_process')
 const uuid = require('uuid')
 const assert = require('assert')
+const debug = require('debug')('main')
 
 const pyPath = path.join(__dirname, 'etc', 'run.py')
 
@@ -27,7 +28,7 @@ function screencapture(windowId, dir, format) {
     
     const filename = path.join(dir, uuid.v4())
     const fullFilename = `${filename}.${extension}`
-    console.log(fullFilename)
+    debug(fullFilename)
 
     const customArgs = []
     if (format) {
@@ -36,7 +37,7 @@ function screencapture(windowId, dir, format) {
     }
     const args = [`-l${windowId}`, fullFilename]
     const allArgs = [].concat(customArgs, args)
-    console.error(allArgs)
+    debug(allArgs)
     
     return new Promise((resolve, reject) => {
         const screencapture = cp.spawn('screencapture', allArgs)
@@ -81,7 +82,7 @@ function main(dir, winName, title, format) {
     return getWindows(winName, title)
         .then((res) => {
             assert(res.length, 'No windows found')
-            console.log('Found windows:', res)
+            debug('Found windows:', res)
             return Promise.all(res.map(win => 
                 screencapture(win.winid, dir, format)
             ))
@@ -89,6 +90,10 @@ function main(dir, winName, title, format) {
 }
 
 module.exports = main
+
+main.getWindows = (app, title) => getWindows(app, title)
+main.screenshotById = (winId, dir, format) => screencapture(winId, dir, format)
+
 
 
 

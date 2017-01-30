@@ -34,9 +34,11 @@ const createMainPromise = (_dir, _winName, _title) =>
     main(_dir, _winName, _title, 'jpg')
 
 const bindedCreateMainPromise = createMainPromise.bind(null, dir, winName, title)
+const bindedGetWindows = main.getWindows.bind(null, winName, title)
 
 const myIterable = {}
 myIterable[Symbol.iterator] = function* () {
+    yield bindedGetWindows()
     for (let i=0; i<5; i++) {
         yield bindedCreateMainPromise()
     }
