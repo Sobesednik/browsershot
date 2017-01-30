@@ -5,20 +5,48 @@ const assert = require('assert')
 const debug = require('debug')('main')
 const fs = require('fs')
 const Writable = require('stream').Writable;
+const rotate = require('log-rotate');
+const pyPath = path.join(__dirname, 'etc', 'run.py');
 
-const pyPath = path.join(__dirname, 'etc', 'run.py')
+function rotateLogFile(logFile) {
+    return new Promise(
+        (resolve, reject) => {
+            rotate(logFile, (err) => {
+                if (err) return reject()
+                return resolve(logFile)
+            })
+        }
+    )
+}
 
-const logfile = path.join(__dirname, 'logs', `stdout-${Date.now()}).log`)
-const logfile2 = path.join(__dirname, 'logs', `stderr-${Date.now()}.log`)
-const logWriteStream = fs.createWriteStream(logfile)
-const logWriteStream2 = fs.createWriteStream(logfile2)
+const logfile = path.join(__dirname, 'logs', `stdout.log`)
+const logfile2 = path.join(__dirname, 'logs', `stderr.log`)
 
-function spawnPython(resolve) {
+const getLogWriteStreams = () => {
+    return Promise.all([
+        rotateLogFile(logfile),
+        rotateLogFile(logfile2),
+    ])
+        //.then(res => ({
+        //    stdout: res[0],
+        //    stderr: res[1],
+        //}))
+        .then(logFiles => 
+            logFiles.map(logfile => 
+                fs.createWriteStream(logfile)
+            ))
+    
+};
+//const logfile2 = path.join(__dirname, 'logs', `stderr-${Date.now()}.log`)
+
+function spawnPython(resolve, reject, logStreams) {
+    assert(Array.isArray(logStreams) && logStreams.length === 2)
+    // console.log(logStreams)
     const python = cp.spawn('python', [pyPath])
     const data = []
     
-    // python.stdout.pipe(logWriteStream)
-    // python.stderr.pipe(logWriteStream2)
+    python.stdout.pipe(logStreams[0])
+    python.stderr.pipe(logStreams[1])
     
     const writable = new Writable()
     writable._write = (chunk, encoding, callback) => {
@@ -45,13 +73,18 @@ function spawnPython(resolve) {
     //    debug('python stderr', String(chunk))
     //})
     // python.stderr.pipe(process.stderr)
-    python.on('exit', () => resolve(data.join()))
+    python.on('exit', (code) => {
+        if (code !== 0) return reject(new Error(`Process exited with code ${code}`))
+        return resolve(data.join())
+    })
 }
 
 function getWindowsWithPython() {
-    return new Promise((resolve, reject) => {
-        return spawnPython(resolve);
-    })
+    return getLogWriteStreams()
+        .then(logStreams => 
+            new Promise((resolve, reject) => 
+                spawnPython(resolve, reject, logStreams)
+            ))
         .then(JSON.parse)
         .catch((err) => { 
             console.error(err);
