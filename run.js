@@ -37,9 +37,11 @@ const bindedCreateMainPromise = createMainPromise.bind(null, dir, winName, title
 const bindedGetWindows = main.getWindows.bind(null, winName, title)
 
 const myIterable = {}
+
+const N = 1
 myIterable[Symbol.iterator] = function* () {
     yield bindedGetWindows()
-    for (let i=0; i<5; i++) {
+    for (let i=0; i<N; i++) {
         yield bindedCreateMainPromise()
     }
 }
