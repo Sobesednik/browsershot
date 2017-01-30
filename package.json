@@ -6,7 +6,7 @@
   "scripts": {
     "test": "zoroaster test",
     "python": "python etc/run.py",
-    "chrome": "node -harmony-async-await run Chrome file system"
+    "chrome": "node -harmony-async-await run Chrome file"
   },
   "keywords": [
     "browsershot"

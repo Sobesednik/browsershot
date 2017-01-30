@@ -27,21 +27,15 @@ const getLogWriteStreams = () => {
         rotateLogFile(logfile),
         rotateLogFile(logfile2),
     ])
-        //.then(res => ({
-        //    stdout: res[0],
-        //    stderr: res[1],
-        //}))
         .then(logFiles => 
             logFiles.map(logfile => 
                 fs.createWriteStream(logfile)
             ))
     
 };
-//const logfile2 = path.join(__dirname, 'logs', `stderr-${Date.now()}.log`)
 
 function spawnPython(resolve, reject, logStreams) {
     assert(Array.isArray(logStreams) && logStreams.length === 2)
-    // console.log(logStreams)
     const python = cp.spawn('python', [pyPath])
     const data = []
     
@@ -50,29 +44,16 @@ function spawnPython(resolve, reject, logStreams) {
     
     const writable = new Writable()
     writable._write = (chunk, encoding, callback) => {
-        // process.stderr.write(chunk)
         debug('>>> ========')
         debug(String(chunk).trim())
         debug('pushing chunk >>>')
         data.push(String(chunk).trim())
         callback(null)
     }
-    // python.stderr.pipe(process.stderr)
 
     python.stdout
         .pipe(writable)
     
-    // python.stdout.pipe(process.stderr)
-        //.pipe(es.mapSync(function(data) {
-  //      }))
-    //apython.stdout.on('data', (chunk) => {
-    //    data.push('python stdout', String(chunk))
-    //    debug(String(chunk))
-    //})
-    //python.stderr.on('data', (chunk) => {
-    //    debug('python stderr', String(chunk))
-    //})
-    // python.stderr.pipe(process.stderr)
     python.on('exit', (code) => {
         if (code !== 0) return reject(new Error(`Process exited with code ${code}`))
         return resolve(data.join())
@@ -123,6 +104,9 @@ function screencapture(windowId, dir, format) {
         screencapture.on('exit', () => resolve(fullFilename))
     })
 }
+
+// data from python script comes in a form of JSON array, like
+// add example here
 function parseArray(arr) {
     return {
         winid: arr[0],
@@ -134,6 +118,7 @@ function parseArray(arr) {
 
 
 function getWindows(app, title) {
+    console.log('get windows for app %s (%s)', app, title)
     return getWindowsWithPython()
         .then(windows => windows.map(parseArray))
         .then(windowsAsObjects => windowsAsObjects
