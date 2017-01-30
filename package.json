@@ -4,7 +4,8 @@
   "description": " A node.js tool to capture browser screen on macOS",
   "main": "main.js",
   "scripts": {
-    "test": "zoroaster test"
+    "test": "zoroaster test",
+    "python": "python etc/run.py"
   },
   "keywords": [
     "browsershot"
