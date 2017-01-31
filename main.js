@@ -73,14 +73,14 @@ function getWindowsWithPython() {
         })
 }
 
-function screencapture(windowId, dir, format) {
+function screencapture(windowId, dir, format, index) {
     assert(windowId)
     assert(dir)
     const extension = typeof format === 'string' ? format : 'png'
     const allowedFormats = ['jpg', 'png']
     assert(allowedFormats.indexOf(extension) !== -1, 'Format not allowed.')
     
-    const filename = path.join(dir, uuid.v4())
+    const filename = path.join(dir, (index ? String(index) : uuid.v4()))
     const fullFilename = `${filename}.${extension}`
     debug(fullFilename)
 
@@ -118,7 +118,6 @@ function parseArray(arr) {
 
 
 function getWindows(app, title) {
-    console.log('get windows for app %s (%s)', app, title)
     return getWindowsWithPython()
         .then(windows => windows.map(parseArray))
         .then(windowsAsObjects => windowsAsObjects
@@ -150,7 +149,7 @@ function main(dir, winName, title, format) {
 module.exports = main
 
 main.getWindows = (app, title) => getWindows(app, title)
-main.screenshotById = (winId, dir, format) => screencapture(winId, dir, format)
+main.screenshotById = (winId, dir, index, format) => screencapture(winId, dir, format, index)
 
 
 
