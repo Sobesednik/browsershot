@@ -3,30 +3,84 @@ const cp = require('child_process')
 const uuid = require('uuid')
 const assert = require('assert')
 const debug = require('debug')('main')
+const fs = require('fs')
+const Writable = require('stream').Writable;
+const rotate = require('log-rotate');
+const pyPath = path.join(__dirname, 'etc', 'run.py');
 
-const pyPath = path.join(__dirname, 'etc', 'run.py')
-
-function getWindowsWithPython() {
-    return new Promise((resolve, reject) => {
-        const python = cp.spawn('python', [pyPath])
-        const data = []
-        python.stdout.on('data', (chunk) => {
-            data.push(String(chunk))
-        })
-        // python.stderr.pipe(process.stderr)
-        python.on('exit', () => resolve(data.join()))
-    })
-        .then(JSON.parse)
+function rotateLogFile(logFile) {
+    return new Promise(
+        (resolve, reject) => {
+            rotate(logFile, (err) => {
+                if (err) return reject()
+                return resolve(logFile)
+            })
+        }
+    )
 }
 
-function screencapture(windowId, dir, format) {
+const logfile = path.join(__dirname, 'logs', `stdout.log`)
+const logfile2 = path.join(__dirname, 'logs', `stderr.log`)
+
+const getLogWriteStreams = () => {
+    return Promise.all([
+        rotateLogFile(logfile),
+        rotateLogFile(logfile2),
+    ])
+        .then(logFiles => 
+            logFiles.map(logfile => 
+                fs.createWriteStream(logfile)
+            ))
+    
+};
+
+function spawnPython(resolve, reject, logStreams) {
+    assert(Array.isArray(logStreams) && logStreams.length === 2)
+    const python = cp.spawn('python', [pyPath])
+    const data = []
+    
+    python.stdout.pipe(logStreams[0])
+    python.stderr.pipe(logStreams[1])
+    
+    const writable = new Writable()
+    writable._write = (chunk, encoding, callback) => {
+        debug('>>> ========')
+        debug(String(chunk).trim())
+        debug('pushing chunk >>>')
+        data.push(String(chunk).trim())
+        callback(null)
+    }
+
+    python.stdout
+        .pipe(writable)
+    
+    python.on('exit', (code) => {
+        if (code !== 0) return reject(new Error(`Process exited with code ${code}`))
+        return resolve(data.join())
+    })
+}
+
+function getWindowsWithPython() {
+    return getLogWriteStreams()
+        .then(logStreams => 
+            new Promise((resolve, reject) => 
+                spawnPython(resolve, reject, logStreams)
+            ))
+        .then(JSON.parse)
+        .catch((err) => { 
+            console.error(err);
+            throw err;
+        })
+}
+
+function screencapture(windowId, dir, format, index) {
     assert(windowId)
     assert(dir)
     const extension = typeof format === 'string' ? format : 'png'
     const allowedFormats = ['jpg', 'png']
     assert(allowedFormats.indexOf(extension) !== -1, 'Format not allowed.')
     
-    const filename = path.join(dir, uuid.v4())
+    const filename = path.join(dir, (index ? String(index) : uuid.v4()))
     const fullFilename = `${filename}.${extension}`
     debug(fullFilename)
 
@@ -50,6 +104,9 @@ function screencapture(windowId, dir, format) {
         screencapture.on('exit', () => resolve(fullFilename))
     })
 }
+
+// data from python script comes in a form of JSON array, like
+// add example here
 function parseArray(arr) {
     return {
         winid: arr[0],
@@ -92,7 +149,7 @@ function main(dir, winName, title, format) {
 module.exports = main
 
 main.getWindows = (app, title) => getWindows(app, title)
-main.screenshotById = (winId, dir, format) => screencapture(winId, dir, format)
+main.screenshotById = (winId, dir, index, format) => screencapture(winId, dir, format, index)
 
 
 

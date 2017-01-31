@@ -6,7 +6,7 @@
   "scripts": {
     "test": "zoroaster test",
     "python": "python etc/run.py",
-    "chrome": "node -harmony-async-await run Chrome file system"
+    "chrome": "node -harmony-async-await run Chrome file"
   },
   "keywords": [
     "browsershot"
@@ -15,7 +15,9 @@
   "license": "ISC",
   "dependencies": {
     "debug": "^2.6.0",
-    "uuid": "^3.0.1"
+    "log-rotate": "^0.2.7",
+    "uuid": "^3.0.1",
+    "yargs": "^6.6.0"
   },
   "devDependencies": {
     "chromedriver": "^2.27.2",

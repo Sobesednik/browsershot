@@ -3,14 +3,7 @@ const path = require('path');
 const assert = require('assert');
 const uuid = require('uuid');
 const fs = require('fs')
-//async function runManyTimes(times, asyncFn) {
-//    let index = 0
-//    while (index < 5) 
-//        await asyncFn.call()
-//        console.log(res)
-//        index++
-//}
-//const gen = runManyTimes();
+
 try {
     assert(process.argv.length >= 4, 'node run Chrome google.com')
 } catch (err) {
@@ -20,6 +13,7 @@ try {
 
 const sessionId = uuid.v4()
 const dir = path.join(__dirname, 'screenshots', sessionId)
+
 try {
     fs.mkdirSync(dir)
 } catch (err) {
@@ -37,29 +31,22 @@ const bindedCreateMainPromise = createMainPromise.bind(null, dir, winName, title
 const bindedGetWindows = main.getWindows.bind(null, winName, title)
 
 const myIterable = {}
+
+const N = 0
 myIterable[Symbol.iterator] = function* () {
     yield bindedGetWindows()
-    for (let i=0; i<5; i++) {
+    for (let i=0; i<N; i++) {
         yield bindedCreateMainPromise()
     }
 }
 
-//[...myIterable]
-//runManyTimes.bind(null, 5, runAsync)
-// function* () {
-//    yield 1
-//    yield 2
-//    yield 3
-//}
- console.time('main-5')
-
+ // console.timer('main-5')
  for (let main of myIterable) {
      main
         .then(console.log)
         .catch(console.error)
  }
-
- console.timeEnd('main-5')
+ // console.timeEnd('main-5')
 
 return
 
